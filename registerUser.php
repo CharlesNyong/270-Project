@@ -24,6 +24,8 @@ global $connection;
 				header("Location: http://asikpo.myweb.cs.uwindsor.ca/60270/Project/signup.php?blnError=3");
 			}
 			else{
+				setcookie("intUserID", $intUserID);
+				setcookie("blnAuthenticated", 1);
 				header("Location: http://asikpo.myweb.cs.uwindsor.ca/60270/Project/homePage.php?UserID=".$intUserID);
 			}				
 		}
