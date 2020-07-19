@@ -9,6 +9,10 @@ switch ($_GET["blnError"]) {
   break;  
 
   case 3:
+    echo '<script>alert("User already exist!")</script>';
+  break;
+
+  case 4:
     echo '<script>alert("There was a problem creating your account.\nPlease try again!!")</script>';
   break;
   
@@ -52,7 +56,11 @@ ob_start();
       <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
-
+    <script>
+      function gotoLogin(){
+         window.location.href = "http://asikpo.myweb.cs.uwindsor.ca/60270/Project/loginPage.php";
+      }
+    </script>
   </head>
 
   <body>
@@ -61,8 +69,10 @@ ob_start();
 
       <form class="form-signin" method="POST" action="registerUser.php">
         <h2 class="form-signin-heading">New User</h2>
-        <label for="Username" class="sr-only">Email address</label>
+        <label for="Username" class="sr-only">UserName</label>
         <input type="text" id="Username" class="form-control" value="Username" name="inputUserName" required autofocus>
+        <label for="Username" class="sr-only">Email Address</label>
+        <input type="text" id="Username" class="form-control"  name="emailAddress" placeholder="Email Address" required autofocus>
         <label for="inputPassword" class="sr-only">Password</label>
         <input type="password" id="inputNewPassword" class="form-control" placeholder="Password" name="inputNewPassword">
         <label for="inputPassword" class="sr-only">Confirm Password</label>
@@ -70,7 +80,7 @@ ob_start();
         <button class="btn btn-lg btn-primary btn-block" type="submit" name="signin">Create Account</button>
         <input type="hidden" value="1" name="signup_Page"></input>
       </form>
-    </div> <!-- /container -->
+     </div> <!-- /container -->
 
 
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
