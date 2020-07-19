@@ -1,10 +1,19 @@
 <?php
-if($_COOKIE["blnAuthenticated"] != 1){
-  header("Location: http://asikpo.myweb.cs.uwindsor.ca/60270/Project/loginPage.php");
-}
 include("connection.php");
+session_start();
 $arrAllContacts = array();
 
+//var_dump($_SESSION);
+
+if($_POST["logOut"]){
+  //setcookie("blnLogOut", 1);
+  session_destroy();
+  header("Location: http://asikpo.myweb.cs.uwindsor.ca/60270/Project/loginPage.php");
+}
+//var_dump($_COOKIE);
+if($_SESSION["blnAuthenticated"] != 1){  
+  header("Location: http://asikpo.myweb.cs.uwindsor.ca/60270/Project/loginPage.php");
+}
 /*TODO: if time permits modify the code from using 
   GET to cookie. this way u don't have to worry about security checks
 */
@@ -18,7 +27,9 @@ if(isset($_GET["UserID"])){
 	$arrAllContacts = displayAllContactsForUser($_GET["UserID"]);
 }
 else if($_POST["deleteContact"] == 1){
-  deleteContact($_POST["intContactID"]);
+  if(!deleteContact($_POST["intContactID"])){
+    echo '<script>alert("There was a problem deleting that record\nTry again!")</script>';
+  }
   $arrAllContacts = displayAllContactsForUser($_POST["userID"]); // get updated contact list
   //echo "In delete case";
 }
@@ -27,78 +38,90 @@ else if(isset($_POST["userID"]) && $_POST["blnGetContact"] != 1){
 }
 if($_POST["blnGetContact"]){
 	$arrAllContacts = getContact($_POST["nameSearch"]);
+  if(empty($arrAllContacts)){
+    $rsSearchResult = "not found";
+  }
 }	
 ob_start();
 ?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
-    <meta name="author" content="">
+    <title>Contact Manager</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="bootstrap/dist/css/bootstrap.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+  <script src="bootstrap/dist/js/bootstrap.min.js"></script>
+  <style>
+    /* Remove the navbar's default rounded borders and increase the bottom margin */ 
+    .navbar {
+      margin-bottom: 50px;
+      border-radius: 0;
+    }
+    
+    /* Remove the jumbotron's default bottom margin */ 
+     .jumbotron {
+      margin-bottom: 0;
+    }
+   
+    /* Add a gray background color and some padding to the footer */
+    footer {
+      background-color: #f2f2f2;
+      padding: 25px;
+    }
 
-    <title>Home page</title>
+    .tableDataXX{
+      font-weight:normal; 
+      font-size:16px; 
+      color: #3366BB;
+    }
 
-    <!-- Bootstrap core CSS -->
-    <link href="bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <link href="bootstrap/docs/assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
-
-      <!-- Custom styles for this template -->
-    <link href="css/signin.css" rel="stylesheet">
-
-    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
-    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-    <script src="bootstrap/docs/assets/js/ie-emulation-modes-warning.js"></script>
-
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-    <script>
-    	//localStorage.setItem("UserID", -1); // initial declaration
-    	window.onload = function(){
-    		
+    .theader-color{
+      background-color: #E5E4E2;
+      font-size: 1.2em;
+    }
+  </style>
+  <script>
+      //localStorage.setItem("UserID", -1); // initial declaration
+      window.onload = function(){
+        
         <?if(isset($_GET["UserID"])){
-    			$UserID = $_GET['UserID'];
-    		}?>
+          $UserID = $_GET['UserID'];
+        }?>
           //alert("Initial local storage value: " + localStorage.getItem("UserID"));
           var intUserID = '<?echo $UserID?>';
         //var value = localStorage.getItem("UserID");
 
         if(intUserID){      
-    			localStorage.setItem("UserID", intUserID);
-    		}
+          localStorage.setItem("UserID", intUserID);
+        }
 
-    		//alert("UserID: " + localStorage.getItem("UserID"));
-    	}
+
+        //alert("UserID: " + localStorage.getItem("UserID"));
+      }
 
       // window.onbeforeunload = function(){
       //   //alert("unload fired");
       //   localStorage.clear();
       // }
 
-    	function getContact(){
-    		if(document.getElementById("nameSearch").value == ""){
-    			alert("Name field must be entered!!");
-    			return;
-    		}
+      function getContact(){
+        if(document.getElementById("nameSearch").value == ""){
+          alert("Name field must be entered!!");
+          return;
+        }
 
         if(document.getElementById("userID").value == ""){
           document.getElementById("userID").value = localStorage.getItem("UserID"); 
         }
-    		//document.getElementById("UserID").value = localStorage.getItem("UserID");
-    		//alert("Value of userID inputField: " + localStorage.getItem("UserID"));
-         //alert("Value of userID inputField: " + document.getElementById("userID").value);	
-    		document.getElementById("blnGetContact").value = 1;
-    		//location.reload();
-    		document.getElementById("filterFrm").submit();
-    	}
+        //document.getElementById("UserID").value = localStorage.getItem("UserID");
+        //alert("Value of userID inputField: " + localStorage.getItem("UserID"));
+         //alert("Value of userID inputField: " + document.getElementById("userID").value); 
+        document.getElementById("blnGetContact").value = 1;
+        //location.reload();
+        document.getElementById("filterFrm").submit();
+      }
 
       function redirect(strURL){
         //alert("URL: " + strURL);
@@ -131,62 +154,112 @@ ob_start();
         document.getElementById("filterFrm").submit();
       }
 
+      function logOut(){
+        //alert("in log out");
+        localStorage.clear();
+        document.getElementById("logOut").value = 1;
+        document.getElementById("logOutFrm").submit();
+        //window.location.href = "http://asikpo.myweb.cs.uwindsor.ca/60270/Project/loginPage.php";
+      }
+
     </script>
-  </head>
-  <body>
-    
-  	<h2 style="position:absolute; top:-10px;">Contact Manager</h2> <h4><a href="newContact.php">New contact</a></h4><br/>
-  	<form id="filterFrm" action="<?=$_SERVER['PHP_SELF'];?>" method="POST">
-	  	<fieldset>
-	  		<legend>Filter</legend>
-	  		<label for="nameSearch">Name:</label>
-	  		<input type="text" id="nameSearch" name="nameSearch" onkeypress="callFunc(event)"></input> <input type="button" value="Search" onclick="getContact()"/>
-        <input type="button" value="All Contacts" onclick="displayAllContacts()"/>
-	  	</fieldset>
-	  	<?if(isset($_GET["UserID"])){?>
-	  		<input type="hidden" id="userID" name="userID" value="<?echo $_GET['UserID'];?>"></input>
-	  	<?}else{
-	  		//echo "second case;"?>
-			<input type="hidden" id="userID" name="userID" value=""></input>
-	  	<?}?>
-	  	<input type="hidden" id="blnGetContact" name="blnGetContact" value="0"></input>
-      <input type="hidden" id="deleteContact" name="deleteContact" value="0"></input>
-      <input type="hidden" id="intContactID" name="intContactID" value="0"></input>	
-	</form>
-	 <table class = "table table-hover" border="0">
-    <?$strCaption = $_POST["blnGetContact"] == 1 ? "Contact Information for ".$_POST["nameSearch"] : "All Contacts";?>
-   <caption><h4><?echo $strCaption;?></h4></caption>
-   <thead>
-      <tr>
-         <th>Name</th>
-         <th>Phone Number</th>
-         <th>Email</th>
-      </tr>
-   </thead>
-   <tbody>
-      <?if(!empty($arrAllContacts)){ 
-          foreach ($arrAllContacts as $intContactID => $arrContact) {?>
-                <tr>
-                <?foreach ($arrContact as $mixKey => $mixData) {
-                    $strLink = "viewDetails.php?UserID=".$arrContact["intUserID"]."&ContactID=".$arrContact["intContactID"];?>
-                    <?if($mixKey != "intUserID" && $mixKey != "intContactID"){?>
-                      <td title="Click to go to the details page" onclick="redirect('<?echo $strLink?>')">
-                          <?echo $mixData;?>
-                      </td>   
-                      <?}
-                  }?>
-                  <td><button  onclick="deleteContact('<?echo $arrContact["intContactID"]?>')">
-                    Delete <img src="images/deleteIcon.png" width="25" height="30"/>
-                  </button></td>
-                </tr>
-            <?}
-          }else{?>
-            <tr><td colspan="3"><h2>Oops! you might want to create some contacts!</h2></td></tr>
-          <?}?>
-   </tbody>
-   
-</table>
-   
+</head>
+<body>
+
+<div class="jumbotron">
+  <div class="container text-center">
+    <h1>Contact Manager</h1>      
+    <p>(Store, Search and Edit Your Contacts)</p>
+  </div>
+</div>
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>                        
+      </button>
+      <a class="navbar-brand" href="#"></a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="<?echo"homePage.php?UserID=".$_COOKIE['intUserID'];?>">All Contacts</a></li>
+        <li><a href="newContact.php">Create Contact</a></li>
+        <li><a href="comment.php">Comment</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a onclick="logOut()"><span class="glyphicon glyphicon-user"></span> Log out</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  <div class="container">    
+      <form id="filterFrm" action="<?=$_SERVER['PHP_SELF'];?>" method="POST">
+        <fieldset>
+          <legend>Search</legend>
+          <label for="nameSearch">Name:</label>
+          <input type="text" id="nameSearch" name="nameSearch" onkeypress="callFunc(event)"></input> <input type="button" value="Find" onclick="getContact()"/>
+          <!-- <input type="button" value="All Contacts" onclick="displayAllContacts()"/> -->
+        </fieldset>
+  	  	<?if(isset($_GET["UserID"])){?>
+  	  		<input type="hidden" id="userID" name="userID" value="<?echo $_GET['UserID'];?>"></input>
+  	  	<?}else{
+  	  		//echo "second case;"?>
+  			<input type="hidden" id="userID" name="userID" value=""></input>
+  	  	<?}?>
+  	  	<input type="hidden" id="blnGetContact" name="blnGetContact" value="0"></input>
+        <input type="hidden" id="deleteContact" name="deleteContact" value="0"></input>
+        <input type="hidden" id="intContactID" name="intContactID" value="0"></input>	
+  	</form>
+    	 <table class = "table table-hover" border="0">
+        <?$strCaption = $_POST["blnGetContact"] == 1 ? "Contact Information for ".$_POST["nameSearch"] : "All Contacts";?>
+       <caption><h4><?echo $strCaption;?></h4></caption>
+       <thead>
+          <tr>
+             <th class="theader-color">Name</th>
+             <th class="theader-color">Phone Number</th>
+             <th class="theader-color">Email</th>
+             <th class="theader-color"></th>
+          </tr>
+       </thead>
+       <tbody>
+          <?if(!empty($arrAllContacts)){ 
+              foreach ($arrAllContacts as $intContactID => $arrContact) {?>
+                    <tr>
+                    <?foreach ($arrContact as $mixKey => $mixData) {
+                        $strLink = "viewDetails.php?UserID=".$arrContact["intUserID"]."&ContactID=".$arrContact["intContactID"];?>
+                        <?if($mixKey != "intUserID" && $mixKey != "intContactID"){?>
+                          <td class="tableDataXX" title="Click to go to the details page" onclick="redirect('<?echo $strLink?>')">
+                              <?echo $mixData;?>
+                          </td>   
+                          <?}
+                      }?>
+                      <td><button  onclick="deleteContact('<?echo $arrContact["intContactID"]?>')">
+                        Delete <img src="images/deleteIcon.png" width="25" height="24"/>
+                      </button></td>
+                    </tr>
+                <?}
+              }else if(empty($arrAllContacts) && $rsSearchResult == "not found"){?>
+                <tr><td colspan="4"><h2>Contact Not Found!</h2></td></tr>
+              <?}else{?>
+                <tr><td colspan="4"><h2>Oops! you might want to create some contacts!</h2></td></tr>
+              <?}?>
+       </tbody>
+      </table>
+      <form id="logOutFrm" action="<?=$_SERVER['PHP_SELF'];?>" method="POST">
+        <input type="hidden" value="" name="logOut"  id="logOut"/>
+       </form> 
+ </div>
+<br><br><br>
+<footer class="container-fluid text-center">
+  <address> 
+     <p><a href="comment.php">Send comment</a></p>  
+     <p>You can contact me @ <b>2263486563</b><p>
+    </address>  
+</footer>
+  
   </body>
   </html>
   <?
@@ -250,10 +323,10 @@ ob_start();
     $rsResult = mysqli_query($connection, $strSQL);
       //echo "Query Used: ". $strSQL;
     if($rsResult){
-        echo '<script>alert("Contact was successfully deleted!")</script>';
+        return true;
     }
     else{
-      echo '<script>alert("There was a problem deleting that record\nTry again!")</script>';
+      return false;
     }
    // echo "Given ID: ". $intUserID;
       // return $arrContacts;  
