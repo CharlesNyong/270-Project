@@ -1,10 +1,17 @@
 <?php
-if($_COOKIE["blnAuthenticated"] != 1){
-  header("Location: http://asikpo.myweb.cs.uwindsor.ca/60270/Project/loginPage.php");
-}
 include("connection.php");
+session_start();
 $arrAllContacts = array();
 
+if($_POST["logOut"]){
+  //setcookie("blnLogOut", 1);
+  session_destroy();
+  header("Location: http://asikpo.myweb.cs.uwindsor.ca/60270/Project/loginPage.php");
+}
+//var_dump($_COOKIE);
+if($_SESSION["blnAuthenticated"] != 1){  
+  header("Location: http://asikpo.myweb.cs.uwindsor.ca/60270/Project/loginPage.php");
+}
 //var_dump($arrAllContacts);
 // prevent others from viewing someone elses contact information
 if($_COOKIE["intUserID"] != $_GET["UserID"] && $_GET["UserID"] != ""){ 
@@ -15,9 +22,8 @@ if(isset($_GET["UserID"]) && isset($_GET["ContactID"])){
 	$readOnlyAttr = readonly;
  // echo "Get condition";
 	$arrAllContacts = getContact($_GET["UserID"], $_GET["ContactID"]);
-	//var_dump($arrAllContacts);
+	setcookie("intUserID", $_GET["UserID"]);
 }
-//var_dump($_POST);
 if($_POST["blnEdit"]){
 	$readOnlyAttr = "";
 	$arrAllContacts = getContact($_POST["intUserID"], $_POST["intContactID"]);
@@ -31,39 +37,59 @@ else if($_POST["blnSave"]){
 // set readonly class based on 
 $readonlyCSS = $readOnlyAttr ? inputReadonly : "";
 
-//var_dump($arrAllContacts);
+//var_dump($_COOKIE);
 ob_start();
 ?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <meta name="description" content="">
-    <meta name="author" content="">
-
     <title>Details page</title>
-    <link href="css/details.css" rel="stylesheet">
-    <!-- Bootstrap core CSS -->
-    <link href="bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="bootstrap/dist/css/bootstrap.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+  <script src="bootstrap/dist/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="css/details.css" />
+  <style>
+    /* Remove the navbar's default rounded borders and increase the bottom margin */ 
+    .navbar {
+      margin-bottom: 50px;
+      border-radius: 0;
+    }
+    
+    /* Remove the jumbotron's default bottom margin */ 
+     .jumbotron {
+      margin-bottom: 0;
+    }
+   
+   	address{
+   		font-style: italic;
+   		font-weight: bold;
+   	}
 
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <link href="bootstrap/docs/assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+    /* Add a gray background color and some padding to the footer */
+    footer {
+      background-color: #f2f2f2;
+      padding: 25px;
+    }
 
-      <!-- Custom styles for this template -->
-    <link href="css/signin.css" rel="stylesheet">
+    .inputReadonly{
+		background-color: #FFFFCC;
+	}
 
-    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
-    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-    <script src="bootstrap/docs/assets/js/ie-emulation-modes-warning.js"></script>
+	.imageDiv{
+		float: left;
+	    border-radius: 6px;
+	    margin-left: 5px;
+	    margin-bottom: 10px;
+	    border: 1px solid black;
+	}
 
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
+	.theader-color{
+		background-color: #E5E4E2;
+		font-size: 1.2em;
+	}
+  </style>
     <script>
     	//localStorage.setItem("UserID", -1); // initial declaration
     	window.onload = function(){
@@ -105,72 +131,135 @@ ob_start();
     		document.getElementById("blnSave").value = 1;
     		document.getElementById("filterFrm").submit();	
     	}
-    	// window.onbeforeunload = function(){
-     //    //alert("unload fired");
-     //    localStorage.clear();
-     //  }
+
+    	function redirect(){
+    		window.location.href ="homePage.php?UserID="+localStorage.getItem("UserID");
+    	}
+
+    	function logOut(){
+        //alert("in log out");
+        localStorage.clear();
+        document.getElementById("logOut").value = 1;
+        document.getElementById("logOutFrm").submit();
+        //window.location.href = "http://asikpo.myweb.cs.uwindsor.ca/60270/Project/loginPage.php";
+      }
     </script>
     </head>
     <body>
-    	<h2 style="position:absolute; top:-10px;">Contact Details</h2><br/>
-    	<div id="imageDiv"><img src="images/imageDefault.jpg" width="150" height="150"></img></div>
-  	<form id="filterFrm" action="<?=$_SERVER['PHP_SELF'];?>" method="POST">
-	 <table class = "table table-hover" border="0">
-	   <thead>
-	      <tr>
-	         <th>Fields</th>
-	         <th>Data</th>
-	      </tr>
-	   </thead>
-	   <tbody>
-	      <?if(!empty($arrAllContacts)){ 
-		      foreach ($arrAllContacts as $intContactID => $arrContact) {?>
-		            <?foreach ($arrContact as $mixKey => $mixData) {
-		                $strLabel = "";
-		                $strFieldType = "";
-		                $strNameAttr = "";?>	
-		                <?if($mixKey != "intUserID" && $mixKey != "intContactID"){
-		                	if($mixKey == "strEmail"){
-		                  		$strLabel = "Email";
-		                  		$strFieldType = "email";
-		                  	}
-		                  	else if($mixKey == "strContactName"){
-		                  		$strLabel = "Full Name";
-		                  		$strFieldType = "text";	
-		                  	}
-		                  	else if($mixKey == "strPhoneNo"){
-		                  		$strLabel = "Phone Number";
-		                  		$strFieldType = "text";		
-		                  	}
-		                  	$strNameAttr = $mixKey;
-		                  	?>
-		                  <tr>
-		                  <td>
-		                  		<label> <?echo $strLabel;?></label>
-		                  </td>
-		                  <td title="value">
-		                      <input type="<?echo $strFieldType;?>" name="<?echo $strNameAttr;?>" value="<?echo $mixData;?>" class="<?echo $readonlyCSS;?>" <?echo $readOnlyAttr?>/>
-		                  </td>
-		                  </tr>   
-		                  <?}
-		              }?>
-		        <?}
-		       }
-		       else{?>
-		       		<tr><td colspan="2"><h2>Contact does not exist! </h2></td></tr>	
-		       <?}?>
-	   </tbody>
-	</table>
-	<?if(!empty($arrAllContacts)){?>
-	<span style="margin-left:3px;"><button onclick="editContact()"> Edit <img src="images/editIcon.jpg" width="25" height="30"/></button>
-	&nbsp;&nbsp;<button onclick="updateContact()">Save <img src="images/saveCheckmark.png" width="25" height="30"/></button>
-	</span>
-	<?}?>  
-		<input type="hidden" id="blnEdit" name="blnEdit" value="0"></input>
-		<input type="hidden" id="blnSave" name="blnSave" value="0"></input>
-     	<input type="hidden" id="intUserID" name="intUserID" value="0"></input>
-      	<input type="hidden" id="intContactID" name="intContactID" value="0"></input>	
-	</form>  
+		<div class="jumbotron">
+		<div class="container text-center">
+		<h1>Contact Manager</h1>      
+		<p>(Store, Search and Edit Your Contacts)</p>
+		</div>
+		</div>
+
+		<nav class="navbar navbar-inverse">
+		<div class="container-fluid">
+		<div class="navbar-header">
+		  <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+		    <span class="icon-bar"></span>
+		    <span class="icon-bar"></span>
+		    <span class="icon-bar"></span>                        
+		  </button>
+		  <a class="navbar-brand" href="#"></a>
+		</div>
+		<div class="collapse navbar-collapse" id="myNavbar">
+		  <ul class="nav navbar-nav">
+		    <li class="active"><a onclick="redirect()">All Contacts</a></li>
+		    <li><a href="newContact.php">Create Contact</a></li>
+		    <li><a href="comment.php">Comment</a></li>
+		  </ul>
+		  <ul class="nav navbar-nav navbar-right">
+		    <li><a onclick="logOut()"><span class="glyphicon glyphicon-user"></span> Log out</a></li>
+		  </ul>
+		</div>
+		</div>
+	</nav>
+  	<div class="container">    
+    	<div class="imageDiv"><img src="images/imageDefault.jpg" width="150" height="150"></img></div>
+	  	<form id="filterFrm" action="<?=$_SERVER['PHP_SELF'];?>" method="POST">
+		 <table class = "table table-hover" border="0">
+		   <thead>
+		      <tr>
+		         <th class="theader-color">Fields</th>
+		         <th class="theader-color">Data</th>
+		      </tr>
+		   </thead>
+		   <tbody>
+		       <?if(!empty($arrAllContacts)){
+		       		$intPhoneNoCount =0;
+			       foreach ($arrAllContacts as $intPhoneID => $arrContact) {
+			       	$intPhoneNoCount ++;
+			       	?>	
+			             <?foreach ($arrContact as $mixKey => $mixData) {
+			                $strLabel = "";
+			                $strFieldType = "";
+			                 $strNameAttr = "";?>	
+			                 <?if($mixKey != "intUserID" && $mixKey != "intContactID" && $mixKey!= "intPhoneID"){
+			                	if($mixKey == "strEmail"){
+			                  		$strEmailValue = $mixData;
+			                  		continue; // keep email for last
+			                  	}
+			                  	else if($mixKey == "strContactName"){
+			                  		$strLabel = "Full Name";
+			                  		$strFieldType = "text";
+			                  		$strNameAttr = $mixKey;	
+			                  	}
+			                  	else if($mixKey == "strPhoneNo"){
+			                  		$strLabel = "Phone Number ".$intPhoneNoCount;
+			                  		$strFieldType = "text";		
+			                  		$strNameAttr = $intPhoneID;
+			                  	}
+			                  	
+			                  	?>
+			                  <tr>
+			                  <td>
+			                  		<p style="font-weight:light; font-size:1.1em;"> <?echo $strLabel;?></p>
+			                  </td>
+			                  <td title="value">
+			                      <input type="<?echo $strFieldType;?>" name="<?echo $strNameAttr;?>" value="<?echo $mixData;?>" class="<?echo $readonlyCSS;?>" <?echo $readOnlyAttr?>/>
+			                  </td>
+			                  </tr>   
+			                  <?}
+			              }?>
+			        <?}?>
+			        <tr>
+	                  <td>
+	                  		<p style="font-weight:light; font-size:1.1em;">Email</p>
+	                  </td>
+	                  <td title="value">
+	                      <input type="email" name="strEmail" value="<?echo $strEmailValue;?>" class="<?echo $readonlyCSS;?>" <?echo $readOnlyAttr?>/>
+	                  </td>
+	                </tr>   
+			       	<?}
+			       	else{?>
+			       		<tr><td colspan="2"><h2>Contact does not exist! </h2></td></tr>	
+			       <?}?>
+		   </tbody>
+		</table>
+		<?if(!empty($arrAllContacts)){?>
+		<span style="margin-left:3px;"><button onclick="editContact()"> Edit <img src="images/editIcon.jpg" width="25" height="30"/></button>
+		&nbsp;&nbsp;<button onclick="updateContact()">Save <img src="images/saveCheckmark.png" width="25" height="30"/></button>
+		</span>
+		<?}?> 
+			<input type="hidden" id="blnEdit" name="blnEdit" value="0"></input>
+			<input type="hidden" id="blnSave" name="blnSave" value="0"></input>
+	     	<input type="hidden" id="intUserID" name="intUserID" value="0"></input>
+	      	<input type="hidden" id="intContactID" name="intContactID" value="0"></input>	
+		</form> 
+	</div>
+	<form id="logOutFrm" action="<?=$_SERVER['PHP_SELF'];?>" method="POST">
+        <input type="hidden" value="" name="logOut"  id="logOut"/>
+       </form> 
+	<br><br>
+	<center>
+	<footer class="container-fluid text-center">
+	  <address>	
+		 <p><a href="comment.php">Send comment</a></p>  
+		 <p>You can contact me @ <b>2263486563</b><p>
+	  </address>	
+	</footer>
+	</center> 
 	</body>
     </html>	
 <?
@@ -185,7 +274,8 @@ ob_start();
 		//echo "in getContact UserID = ".$intUserID. " ContactID = ". $intContactID;
 		$arrContacts = array();
 	    global $connection;
-	    $strSQL = "SELECT strContactName, strPhoneNo, strEmail, tblContact.intUserID, tblContact.intContactID
+	    $arrUniqueContacts = array();
+	    $strSQL = "SELECT DISTINCT strContactName, strPhoneNo, strEmail, tblContact.intUserID, tblContact.intContactID, intPhoneID
 	                FROM asikpo_270Project.tblContact
 	                INNER JOIN asikpo_270Project.tblUsers
 	                ON (tblUsers.intUserID)
@@ -196,24 +286,43 @@ ob_start();
 	    $rsResult = mysqli_query($connection, $strSQL);
 	      //echo "Query Used: ". $strSQL;
 	    while ($arrRow = mysqli_fetch_assoc($rsResult)) {
-	        //$this->intAttendanceID = $arrRow["intAttendanceID"];
-	        $arrContacts[$arrRow["intContactID"]] = $arrRow;
-	      }
+	        //$arrPhoneNumbers["intPhoneID"] = 
+	        $arrContacts[$arrRow["intPhoneID"]] = $arrRow;
+	    }
+	    $blnFirstTime = 1;
+	    foreach ($arrContacts as $intPhoneID => $arrContactInfo) {
+    		if($blnFirstTime){
+    			$initPhoneID = $intPhoneID;
+    			$blnFirstTime = 0;
+    		}
+    		foreach ($arrContactInfo as $mixKey => $mixValue) {
+    			if($initPhoneID != $intPhoneID){ // new row (not the first row) phoneID has changed	
+    				if($mixKey == "strPhoneNo"){ // only change the phoneNumber cell for subsequent rows
+    					$arrUniqueContacts[$intPhoneID][$mixKey] = $mixValue;
+    				}
+    			}
+    			else{ // store information once unless its the phone Number data
+    				$arrUniqueContacts[$intPhoneID][$mixKey] = $mixValue; 
+    			}
+    		}
+	    }
+	    return $arrUniqueContacts;
 	   // echo "Given ID: ". $intUserID;
-	      return $arrContacts;
+	      //return $arrContacts;
 	}
 
 	function updateContact($intUserID, $intContactID){
 		$arrOldContactInfo = getContact($intUserID, $intContactID);
 		global $connection;
+		$arrChangedPhoneNumbers = array();
 		$strEmail = $_POST["strEmail"];
 		$strContactName = $_POST["strContactName"];
-		$strPhoneNo = $_POST["strPhoneNo"];
+		
 		$strSQL = "UPDATE asikpo_270Project.tblContact
 				SET";
-		foreach ($arrOldContactInfo as $intContactID => $arrInfo) {
+		foreach ($arrOldContactInfo as $intPhoneID => $arrInfo) {
 			foreach ($arrInfo as $mixKey => $mixData){
-				if($mixKey != "intUserID" && $mixKey != "intContactID"){
+				if($mixKey != "intUserID" && $mixKey != "intContactID" && $mixKey!= "intPhoneID"){
                 	if($mixKey == "strEmail" && $mixData != $_POST["strEmail"]){ // email was changed
                   		$strSQL .= " strEmail = '$strEmail'".","; 
                   		$blnDataChanged = true;	
@@ -224,8 +333,8 @@ ob_start();
                   		$blnDataChanged = true;
                   	}
                   	
-                  	if($mixKey == "strPhoneNo" && $mixData != $_POST["strPhoneNo"]){
-                  		$blnPhoneNoChanged = true;
+                  	if($mixKey == "strPhoneNo" && $arrOldContactInfo[$intPhoneID]["strPhoneNo"] != $_POST[$intPhoneID]){
+                  		$arrChangedPhoneNumbers[$intPhoneID] = $_POST[$intPhoneID];
                   	}
 				}
 			}		
@@ -237,12 +346,15 @@ ob_start();
 			$rsResult = mysqli_query($connection, $strSQL);
 		}
 
-		if($blnPhoneNoChanged){
-			$strSQL = "UPDATE asikpo_270Project.tblPhoneNumber 
-						SET strPhoneNo = '$strPhoneNo' 
-						WHERE intContactID = '$intContactID' ";
-			//echo "Update query: ".$strSQL;			
-			$rsResult = mysqli_query($connection, $strSQL);						
+		if(!empty($arrChangedPhoneNumbers)){
+			foreach ($arrChangedPhoneNumbers as $intPhoneID => $strPhoneNo) {
+				$strSQL = "UPDATE asikpo_270Project.tblPhoneNumber 
+							SET strPhoneNo = '$strPhoneNo' 
+							WHERE intContactID = '$intContactID' 
+							AND intPhoneID = '$intPhoneID' ";
+				//echo "Update query: ".$strSQL;			
+				$rsResult = mysqli_query($connection, $strSQL);
+			}							
 		}
 
 		$arrUpdatedContact = getContact($intUserID, $intContactID);
