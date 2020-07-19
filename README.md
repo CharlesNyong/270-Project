@@ -19,3 +19,6 @@ Note: this was a project done for one of my university courses, but i plan on en
 You can use the application via this link [http://asikpo.myweb.cs.uwindsor.ca/60270/Project/loginPage.php]
 
 
+Note: To run this project locally with the exact UI styling present in the remote link shown above. You need the bootstrap library that was used. If needed, please email me at [asikpo.charles@yahoo.com] to obtain this library. I am very responsive to my email so do not hesitate to reach out
+
+
