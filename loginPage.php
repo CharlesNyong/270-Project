@@ -1,4 +1,10 @@
 <?php
+// unset($_COOKIE["password"]);
+// unset($_COOKIE["userName"]);
+// unset($_COOKIE["intUserID"]);
+// unset($_COOKIE["blnAuthenticated"]);
+
+//var_dump($_SESSION);
 if($_GET["blnError"]){
   echo '<script>alert("Invalid username or password\nAccount may not exist!")</script>';
 }
@@ -48,7 +54,11 @@ ob_start();
       //   sessionStorage.setItem("UserName", strUsername);
       //   sessionStorage.setItem("Password", strPassword);
 
-      //   alert("UserName: " + sessionStorage.getItem("UserName"));   
+      // window.location.hash="no-back-button";
+      // window.location.hash="Again-No-back-button";//again because google chrome don't insert first hash into history
+      // window.onhashchange= function(){
+      //   window.location.hash="no-back-button";
+      // }
     </script>
 
   </head>
@@ -63,14 +73,10 @@ ob_start();
         <input type="text" id="Username" class="form-control" value="Username" name="inputUserName" required autofocus>
         <label for="inputPassword" class="sr-only">Password</label>
         <input type="password" id="inputPassword" class="form-control" placeholder="Password" name="inputPassword">
-        <div class="checkbox">
-          <label>
-            <input type="checkbox" value="remember-me"> Remember me
-          </label>
-        </div>
         <button class="btn btn-lg btn-primary btn-block" type="submit" name="signin">Sign in</button>
       </form>
-      <div class="form-signin"><button class="btn btn-lg btn-primary btn-block" onclick="signup();">Sign up</button></div>
+      <div class="form-signin"><button class="btn btn-lg btn-primary btn-block" onclick="signup();">New User</button></div>
+      <center><h4><a href="retrievePassword.php">Forgot Your Password or Username?</a></h4></center>
     </div> <!-- /container -->
 
 
@@ -82,4 +88,4 @@ ob_start();
 $strHTML .= ob_get_contents();
 ob_end_clean();
 echo $strHTML;
- ?>
+?>
